@@ -106,14 +106,14 @@ class ItemsRepository(BaseRepository):  # noqa: WPS214
         tag: Optional[str] = None,
         seller: Optional[str] = None,
         favorited: Optional[str] = None,
+        title: Optional[str] = None,
         limit: int = 20,
         offset: int = 0,
         requested_user: Optional[User] = None,
     ) -> List[Item]:
         query_params: List[Union[str, int]] = []
         query_params_count = 0
-
-        # fmt: off
+        
         query = Query.from_(
             items,
         ).select(
@@ -135,6 +135,32 @@ class ItemsRepository(BaseRepository):  # noqa: WPS214
                 SELLER_USERNAME_ALIAS,
             ),
         )
+
+        # fmt: off
+        if title:
+            query = Query.from_(
+                items,
+            ).select(
+                items.id,
+                items.slug,
+                items.title,
+                items.description,
+                items.body,
+                items.image,
+                items.created_at,
+                items.updated_at,
+                Query.from_(
+                    users,
+                ).where(
+                    users.id == items.seller_id,
+                ).select(
+                    users.username,
+                ).as_(
+                    SELLER_USERNAME_ALIAS,
+                ),
+            ).where(
+                items.title.like(f"%{title}%")
+            )
         # fmt: on
 
         if tag:
